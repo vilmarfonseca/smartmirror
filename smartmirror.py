@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # smartmirror.py
 # requirements
 # requests, feedparser, traceback, Pillow
@@ -10,6 +11,7 @@ import requests
 import json
 import traceback
 import feedparser
+import urllib2
 
 from PIL import Image, ImageTk
 from contextlib import contextmanager
@@ -22,6 +24,7 @@ date_format = " %d %b %Y" # check python doc for strftime() for options
 news_country_code = 'br'
 weather_api_token = '8f581519fd2a8f579c4ed6d25d6fe5db' # create account at https://darksky.net/dev/
 weather_lang = 'pt' # see https://darksky.net/dev/docs/forecast for full list of language parameters values
+spotify_api_token = 'BQDWeet77GUj5Si_2uU2DdW8yx4hjw3mbhd_tqk8S_lUALcL18fPWDrJ5rLcwrKvbnMoAE7TmhI4EY7TimTfmyyZyWrUv-uR9B_0sL3BBn9rDMxQ6eZ3PXfOFoduWWdY8P0g0xVJm4y0n24BdSJosYl4ixA'
 weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of unit parameters values
 latitude = -30.0325 # Set this if IP location lookup does not work for you (must be a string)
 longitude = -51.2304 # Set this if IP location lookup does not work for you (must be a string)
@@ -98,6 +101,61 @@ class Clock(Frame):
             # to update the time display as needed
             # could use >200 ms, but display gets jerky
             self.timeLbl.after(200, self.tick)
+
+class Spotify(Frame):
+    def __init__(self, parent, *args, **kwargs):
+        Frame.__init__(self, parent, bg='black')
+        # initialize time label
+        self.title1 = 'Tocando Agora'
+        self.titleLbl = Label(self, text=self.title1, font=('Helvetica', medium_text_size), fg="white", bg="black")
+        self.titleLbl.pack(side=TOP, anchor=E, padx=0)
+        # initialize icon
+        self.icon = ''
+        self.iconLbl = Label(self, bg="black")
+        self.iconLbl.pack(side=RIGHT, anchor=N, padx=20)
+        # initialize day of week
+        self.day_of_week1 = ''
+        self.dayOWLbl = Label(self, text=self.day_of_week1, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.dayOWLbl.pack(side=BOTTOM, anchor=E)
+        # initialize date label
+        self.date1 = ''
+        self.dateLbl = Label(self, text=self.date1, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.dateLbl.pack(side=BOTTOM, anchor=E)
+        self.tick()
+
+    def tick(self):
+        with setlocale(ui_locale):
+
+            day_of_week2 = 'Nome da música' #time.strftime('%A')
+            date2 = time.strftime(date_format)
+
+            spotify_res_url = "https://api.spotify.com/v1/me/player/currently-playing"
+            r = requests.get(spotify_res_url, headers = {"Authorization":"Bearer BQCn6dttauxDC1_JLDkp5TDE_HUh_wiOJYhPyLpqvF7heDl6ZQzs6P4zZAAN35Kxx1xM6qxQRCnPhseT1eJdYBlJPojpbxfjrJMoz2cGXEj2NrgrUE6mIDK7nhqj17G8SnS_Lcbip2kWR-BkU1_6vCMo5cc"})
+            spotify_response = json.loads(r.text)
+            day_of_week2 = spotify_response['item']['name']
+            date2 = spotify_response['item']['artists'][0]['name']
+            icon = spotify_response['item']['album']['images'][0]['url']
+            img = Image.open(urllib2.urlopen(icon))
+            img = img.resize((150, 150), Image.ANTIALIAS)
+
+            photo = ImageTk.PhotoImage(img)
+            self.iconLbl.config(image=photo)
+            self.iconLbl.image = photo
+
+            #title1 = 'Tocando Agora'
+            #self.timeLbl.config(text=title1)
+
+            if day_of_week2 != self.day_of_week1:
+                self.day_of_week1 = day_of_week2
+                self.dayOWLbl.config(text=day_of_week2)
+            if date2 != self.date1:
+                self.date1 = date2
+                self.dateLbl.config(text=date2)
+            # calls itself every 200 milliseconds
+            # to update the time display as needed
+            # could use >200 ms, but display gets jerky
+            self.dayOWLbl.after(200, self.tick)
+            #self.dateLbl.after(200, self.tick)
 
 
 class Weather(Frame):
@@ -212,7 +270,7 @@ class News(Frame):
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
         self.config(bg='black')
-        self.title = 'Manchetes' # 'News' is more internationally generic
+        self.title = 'Notícias' 
         self.newsLbl = Label(self, text=self.title, font=('Helvetica', medium_text_size), fg="white", bg="black")
         self.newsLbl.pack(side=TOP, anchor=W)
         self.headlinesContainer = Frame(self, bg="black")
@@ -303,6 +361,9 @@ class FullscreenWindow:
         # clock
         self.clock = Clock(self.topFrame)
         self.clock.pack(side=RIGHT, anchor=N, padx=100, pady=60)
+        # spotify
+        self.spotify = Spotify(self.bottomFrame)
+        self.spotify.pack(side=RIGHT, anchor=S, padx=100, pady=60)
         # weather
         self.weather = Weather(self.topFrame)
         self.weather.pack(side=LEFT, anchor=N, padx=100, pady=60)
