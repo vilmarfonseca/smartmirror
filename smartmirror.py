@@ -12,6 +12,8 @@ import json
 import traceback
 import feedparser
 import urllib2
+import spotipy
+import spotipy.util as util
 
 from PIL import Image, ImageTk
 from contextlib import contextmanager
@@ -24,7 +26,6 @@ date_format = " %d %b %Y" # check python doc for strftime() for options
 news_country_code = 'br'
 weather_api_token = '8f581519fd2a8f579c4ed6d25d6fe5db' # create account at https://darksky.net/dev/
 weather_lang = 'pt' # see https://darksky.net/dev/docs/forecast for full list of language parameters values
-spotify_api_token = 'BQDWeet77GUj5Si_2uU2DdW8yx4hjw3mbhd_tqk8S_lUALcL18fPWDrJ5rLcwrKvbnMoAE7TmhI4EY7TimTfmyyZyWrUv-uR9B_0sL3BBn9rDMxQ6eZ3PXfOFoduWWdY8P0g0xVJm4y0n24BdSJosYl4ixA'
 weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of unit parameters values
 latitude = -30.0325 # Set this if IP location lookup does not work for you (must be a string)
 longitude = -51.2304 # Set this if IP location lookup does not work for you (must be a string)
@@ -126,24 +127,25 @@ class Spotify(Frame):
     def tick(self):
         with setlocale(ui_locale):
 
-            day_of_week2 = 'Nome da música' #time.strftime('%A')
-            date2 = time.strftime(date_format)
+            scope = 'user-read-currently-playing'
 
-            spotify_res_url = "https://api.spotify.com/v1/me/player/currently-playing"
-            r = requests.get(spotify_res_url, headers = {"Authorization":"Bearer BQCn6dttauxDC1_JLDkp5TDE_HUh_wiOJYhPyLpqvF7heDl6ZQzs6P4zZAAN35Kxx1xM6qxQRCnPhseT1eJdYBlJPojpbxfjrJMoz2cGXEj2NrgrUE6mIDK7nhqj17G8SnS_Lcbip2kWR-BkU1_6vCMo5cc"})
-            spotify_response = json.loads(r.text)
-            day_of_week2 = spotify_response['item']['name']
-            date2 = spotify_response['item']['artists'][0]['name']
-            icon = spotify_response['item']['album']['images'][0]['url']
+            token = util.prompt_for_user_token('vilmarfonseca', scope, client_id='913376edbdfb43798813fd3ec1f63004', client_secret='d66246523925476a8ceca8967c490fff', redirect_uri='http://google.com/')
+
+            spotifyObject = spotipy.Spotify(auth=token)
+            current_track = spotifyObject.current_user_playing_track()
+
+            day_of_week2 = ''
+            date2 = ''
+
+            day_of_week2 = current_track['item']['name']
+            date2 = current_track['item']['artists'][0]['name']
+            icon = current_track['item']['album']['images'][0]['url']
             img = Image.open(urllib2.urlopen(icon))
             img = img.resize((150, 150), Image.ANTIALIAS)
 
             photo = ImageTk.PhotoImage(img)
             self.iconLbl.config(image=photo)
             self.iconLbl.image = photo
-
-            #title1 = 'Tocando Agora'
-            #self.timeLbl.config(text=title1)
 
             if day_of_week2 != self.day_of_week1:
                 self.day_of_week1 = day_of_week2
