@@ -28,6 +28,10 @@ xlarge_text_size = 94
 large_text_size = 48
 medium_text_size = 28
 small_text_size = 18
+#spotify
+client_id = '913376edbdfb43798813fd3ec1f63004'
+client_secret = 'd66246523925476a8ceca8967c490fff'
+redirect_url = 'http://google.com/'
 
 @contextmanager
 def setlocale(name): #thread proof function to work with locale
@@ -77,13 +81,12 @@ class Clock(Frame):
     def tick(self):
         with setlocale(ui_locale):
             if time_format == 12:
-                time2 = time.strftime('%I:%M %p') #hour in 12h format
+                time2 = time.strftime('%I:%M %p') 
             else:
-                time2 = time.strftime('%H:%M') #hour in 24h format
+                time2 = time.strftime('%H:%M') 
 
             day_of_week2 = time.strftime('%A')
             date2 = time.strftime(date_format)
-            # if time string has changed, update it
             if time2 != self.time1:
                 self.time1 = time2
                 self.timeLbl.config(text=time2)
@@ -93,9 +96,6 @@ class Clock(Frame):
             if date2 != self.date1:
                 self.date1 = date2
                 self.dateLbl.config(text=date2)
-            # calls itself every 200 milliseconds
-            # to update the time display as needed
-            # could use >200 ms, but display gets jerky
             self.timeLbl.after(200, self.tick)
 
 class Spotify(Frame):
@@ -110,49 +110,46 @@ class Spotify(Frame):
         self.iconLbl = Label(self, bg="black")
         self.iconLbl.pack(side=RIGHT, anchor=N, padx=20)
         # initialize day of week
-        self.day_of_week1 = ''
-        self.dayOWLbl = Label(self, text=self.day_of_week1, font=('Helvetica', small_text_size), fg="white", bg="black")
-        self.dayOWLbl.pack(side=BOTTOM, anchor=E)
+        self.song_name1 = ''
+        self.songOWLbl = Label(self, text=self.song_name1, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.songOWLbl.pack(side=BOTTOM, anchor=E)
         # initialize date label
-        self.date1 = ''
-        self.dateLbl = Label(self, text=self.date1, font=('Helvetica', small_text_size), fg="white", bg="black")
-        self.dateLbl.pack(side=BOTTOM, anchor=E)
+        self.artist_name1 = ''
+        self.artistLbl = Label(self, text=self.artist_name1, font=('Helvetica', small_text_size), fg="white", bg="black")
+        self.artistLbl.pack(side=BOTTOM, anchor=E)
         self.tick()
 
     def tick(self):
         with setlocale(ui_locale):
-
+            #Set for request from Spotify API
             scope = 'user-read-currently-playing'
-
-            token = util.prompt_for_user_token('vilmarfonseca', scope, client_id='913376edbdfb43798813fd3ec1f63004', client_secret='d66246523925476a8ceca8967c490fff', redirect_uri='http://google.com/')
-
+            #GET to Spotify API
+            token = util.prompt_for_user_token('vilmarfonseca', scope, client_id, client_secret, redirect_url)
             spotifyObject = spotipy.Spotify(auth=token)
-            current_track = spotifyObject.current_user_playing_track()
+            #Getting song, artist and album art from currently plaiyng song
+            if spotifyObject.current_user_playing_track():
+                current_track = spotifyObject.current_user_playing_track()
+                song_name2 = current_track['item']['name']
+                artist_name2 = current_track['item']['artists'][0]['name']
+                icon = current_track['item']['album']['images'][0]['url']
+                img = Image.open(urllib2.urlopen(icon))
+                img = img.resize((150, 150), Image.ANTIALIAS)
+                photo = ImageTk.PhotoImage(img)
+                self.iconLbl.config(image=photo)
+                self.iconLbl.image = photo
+            else:
+                self.title1 = ''
+                song_name2 = 'Spotify desligado' #Nothing is being played
+                artist_name2 = ''
 
-            day_of_week2 = ''
-            date2 = ''
-
-            day_of_week2 = current_track['item']['name']
-            date2 = current_track['item']['artists'][0]['name']
-            icon = current_track['item']['album']['images'][0]['url']
-            img = Image.open(urllib2.urlopen(icon))
-            img = img.resize((150, 150), Image.ANTIALIAS)
-
-            photo = ImageTk.PhotoImage(img)
-            self.iconLbl.config(image=photo)
-            self.iconLbl.image = photo
-
-            if day_of_week2 != self.day_of_week1:
-                self.day_of_week1 = day_of_week2
-                self.dayOWLbl.config(text=day_of_week2)
-            if date2 != self.date1:
-                self.date1 = date2
-                self.dateLbl.config(text=date2)
-            # calls itself every 200 milliseconds
-            # to update the time display as needed
-            # could use >200 ms, but display gets jerky
-            self.dayOWLbl.after(200, self.tick)
-            #self.dateLbl.after(200, self.tick)
+            #Updates when song is changed
+            if song_name2 != self.song_name1:
+                self.song_name1 = song_name2
+                self.songOWLbl.config(text=song_name2)
+            if artist_name2 != self.artist_name1:
+                self.artist_name1 = artist_name2
+                self.artistLbl.config(text=artist_name2)
+            self.songOWLbl.after(200, self.tick)
 
 
 class Weather(Frame):
