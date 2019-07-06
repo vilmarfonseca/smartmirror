@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# smartmirror.py
-# requirements
-# requests, feedparser, traceback, Pillow
-
 from Tkinter import *
 import locale
 import threading
@@ -20,15 +15,15 @@ from contextlib import contextmanager
 
 LOCALE_LOCK = threading.Lock()
 
-ui_locale = 'pt_BR' # e.g. 'fr_FR' fro French, '' as default
+ui_locale = '' 
 time_format = 24 # 12 or 24
 date_format = " %d %b %Y" # check python doc for strftime() for options
 news_country_code = 'br'
-weather_api_token = '8f581519fd2a8f579c4ed6d25d6fe5db' # create account at https://darksky.net/dev/
-weather_lang = 'pt' # see https://darksky.net/dev/docs/forecast for full list of language parameters values
-weather_unit = 'si' # see https://darksky.net/dev/docs/forecast for full list of unit parameters values
-latitude = -30.0325 # Set this if IP location lookup does not work for you (must be a string)
-longitude = -51.2304 # Set this if IP location lookup does not work for you (must be a string)
+weather_api_token = '8f581519fd2a8f579c4ed6d25d6fe5db'
+weather_lang = 'pt' 
+weather_unit = 'si' 
+latitude = -30.0325 
+longitude = -51.2304
 xlarge_text_size = 94
 large_text_size = 48
 medium_text_size = 28
@@ -272,7 +267,7 @@ class News(Frame):
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
         self.config(bg='black')
-        self.title = 'Notícias' 
+        self.title = 'Noticias' 
         self.newsLbl = Label(self, text=self.title, font=('Helvetica', medium_text_size), fg="white", bg="black")
         self.newsLbl.pack(side=TOP, anchor=W)
         self.headlinesContainer = Frame(self, bg="black")
@@ -316,49 +311,17 @@ class NewsHeadline(Frame):
         self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', small_text_size), fg="white", bg="black")
         self.eventNameLbl.pack(side=LEFT, anchor=N)
 
-
-class Calendar(Frame):
-    def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, bg='black')
-        self.title = 'Calendar Events'
-        self.calendarLbl = Label(self, text=self.title, font=('Helvetica', medium_text_size), fg="white", bg="black")
-        self.calendarLbl.pack(side=TOP, anchor=E)
-        self.calendarEventContainer = Frame(self, bg='black')
-        self.calendarEventContainer.pack(side=TOP, anchor=E)
-        self.get_events()
-
-    def get_events(self):
-        #TODO: implement this method
-        # reference https://developers.google.com/google-apps/calendar/quickstart/python
-
-        # remove all children
-        for widget in self.calendarEventContainer.winfo_children():
-            widget.destroy()
-
-        calendar_event = CalendarEvent(self.calendarEventContainer)
-        calendar_event.pack(side=TOP, anchor=E)
-        pass
-
-
-class CalendarEvent(Frame):
-    def __init__(self, parent, event_name="Event 1"):
-        Frame.__init__(self, parent, bg='black')
-        self.eventName = event_name
-        self.eventNameLbl = Label(self, text=self.eventName, font=('Helvetica', small_text_size), fg="white", bg="black")
-        self.eventNameLbl.pack(side=TOP, anchor=E)
-
-
 class FullscreenWindow:
 
     def __init__(self):
         self.tk = Tk()
+        self.tk.attributes("-fullscreen", True)
         self.tk.configure(background='black')
         self.topFrame = Frame(self.tk, background = 'black')
         self.bottomFrame = Frame(self.tk, background = 'black')
         self.topFrame.pack(side = TOP, fill=BOTH, expand = YES)
         self.bottomFrame.pack(side = BOTTOM, fill=BOTH, expand = YES)
         self.state = False
-        self.tk.bind("<Return>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
         # clock
         self.clock = Clock(self.topFrame)
@@ -372,14 +335,6 @@ class FullscreenWindow:
         # news
         self.news = News(self.bottomFrame)
         self.news.pack(side=LEFT, anchor=S, padx=100, pady=60)
-        # calender - removing for now
-        # self.calender = Calendar(self.bottomFrame)
-        # self.calender.pack(side = RIGHT, anchor=S, padx=100, pady=60)
-
-    def toggle_fullscreen(self, event=None):
-        self.state = not self.state  # Just toggling the boolean
-        self.tk.attributes("-fullscreen", self.state)
-        return "break"
 
     def end_fullscreen(self, event=None):
         self.state = False
